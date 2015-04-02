@@ -42,6 +42,7 @@ class Headline_Envy_Admin {
 			&& 'post-new.php' !== $hook
 			&& 'headlineenvy_page_headline-envy-settings' !== $hook
 			&& 'headlineenvy_page_headline-envy-results' !== $hook
+			&& 'toplevel_page_headline-envy-settings' !== $hook
 		) {
 			return;
 		}//end if

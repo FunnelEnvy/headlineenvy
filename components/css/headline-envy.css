@@ -210,3 +210,10 @@
 #headline-envy-results .experiment-results table:first-child {
   display: table;
 }
+
+#headline-envy-credits {
+  text-align: center;
+}
+#headline-envy-credits p {
+  color: #999;
+}

@@ -108,3 +108,5 @@
 		?>
 	</form>
 </div>
+<?php
+include __DIR__ . '/credits.php';
