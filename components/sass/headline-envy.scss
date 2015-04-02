@@ -1,0 +1,289 @@
+.he-container {
+	&#he-titles {
+		counter-reset: title-counter;
+		margin-top: .5rem;
+		position: relative;
+
+		[class*=" version-3"] & {
+			margin-bottom: 1rem;
+		}
+
+		&.title-select {
+			background: #fcfce8;
+			border: 1px solid #dbd800;
+			border-radius: 4px;
+			padding: 1rem;
+
+			.add-title,
+			.select-title {
+				display: none;
+			}
+
+			.he-title {
+				&:hover {
+					.dashicons-dismiss {
+						display: none;
+					}
+				}
+			}
+
+			label {
+				background: transparent;
+
+				.num {
+					display: none;
+				}
+
+				[name="he-winner"] {
+					display: inline-block;
+				}
+			}
+
+			.cancel-select-title {
+				display: inline-block;
+			}
+
+			.he-title-original {
+				display: block;
+
+				input[type="text"] {
+					font-style: italic;
+				}
+			}
+
+			input[type="text"] {
+				box-shadow: none;
+				color: #000;
+			}
+		}
+
+		.saving {
+			background: rgba( 0, 0, 0, .3 );
+			border-radius: 4px;
+			bottom: 0;
+			display: none;
+			left: 0;
+			padding: 1rem;
+			position: absolute;
+			right: 0;
+			top: 0;
+			z-index: 5;
+
+			.saving-post & {
+				display: block;
+			}
+
+			p {
+				background: rgba( 0, 0, 0, .8 );
+				border-radius: 4px;
+				color: #fff;
+				margin-top: 1rem;
+				padding: .5rem;
+			}
+		}
+	}
+
+	// don't show the "Pick Winner" button when creating a new post
+	.select-title {
+		display: none;
+
+		.post-new-php & {
+			display: none;
+		}
+	}
+
+	.he-title + .he-title + button + .select-title {
+		display: inline-block;
+	}
+
+	.cancel-select-title,
+	.he-title-original {
+		display: none;
+	}
+
+	.view-experiment {
+		color: #999;
+		display: none;
+		line-height: 2;
+		margin-left: 1rem;
+		opacity: 0.7;
+
+		&:hover {
+			opacity: 1;
+		}
+	}
+
+	&.has-experiment {
+		.view-experiment {
+			display: inline-block;
+		}
+	}
+
+	.he-title {
+		margin-bottom: .5rem;
+
+		p {
+			margin-top: 0;
+		}
+
+		.num {
+			&:before {
+				content: counter( title-counter );
+				counter-increment: title-counter;
+			}
+		}
+
+		&:hover {
+			label {
+				.num {
+					// we set this to position: absolute because if we merely display:none, then the CSS counter
+					// gets screwed up on mouseover
+					position: absolute;
+					height: 0;
+					overflow: hidden;
+					width: 0;
+				}
+
+				.dashicons {
+					display: inline-block;
+				}
+			}
+		}
+
+		label {
+			background: #e5e5e5;
+			border-radius: 6px;
+			color: #999;
+			display: inline-block;
+			margin-right: .25rem;
+			padding: .4rem .5rem;
+			position: relative;
+			text-align: center;
+			top: -2px;
+			width: 1.5rem;
+
+			&:hover {
+				.dashicons-dismiss {
+					color: #760114;
+				}
+			}
+
+			.dashicons-dismiss {
+				color: #999;
+				display: none;
+				height: 18px;
+				-webkit-transition: all 0.25s ease;
+				transition: all 0.25s ease;
+			}
+
+			[name="he-winner"] {
+				display: none;
+			}
+		}
+
+		input {
+			padding: .3215rem;
+			width: calc( 100% - 8.5rem );
+		}
+	}
+
+	.he-status {
+		background: #e5e5e5;
+		border-radius: 6px;
+		color: #999;
+		display: inline-block;
+		margin-left: .5rem;
+		padding: .4rem .5rem;
+		text-align: center;
+		width: 3.5rem;
+	}
+
+	[data-winner="true"] {
+		.he-status {
+			background: #85a91a;
+			color: #fff;
+		}
+	}
+
+	.button {
+		.dashicons {
+			color: #ccc;
+			position: relative;
+			-webkit-transition: all 0.25s ease;
+			transition: all 0.25s ease;
+			top: 4px;
+		}
+
+		&:hover {
+			.dashicons {
+				color: #555;
+			}
+		}
+	}
+}
+
+#headline-envy-settings {
+	.invalid-key {
+		color: #e30000;
+		font-style: italic;
+		margin-top: .25rem;
+
+		input {
+			border: 1px solid #e30000;
+		}
+	}
+}
+
+#headline-envy-results {
+	.headline-results {
+		background: #fafafa;
+		border-radius: 4px;
+		box-shadow: 0 0 5px 0 rgba( 0, 0, 0, .1 );
+		margin-bottom: 1rem;
+		padding: .5rem;
+
+		header {
+			background: #fff;
+			border: 1px solid #e5e5e5;
+			box-shadow: 0 1px 1px rgba( 0, 0, 0, .04 );
+			margin-bottom: .5rem;
+			overflow: hidden;
+			padding: .5rem;
+		}
+
+		.experiment-title {
+			font-size: 1.1rem;
+			line-height: 1.6;
+		}
+
+		.experiment-options {
+			float: right;
+
+			.button {
+				.dashicons {
+					position: relative;
+					top: 3px;
+				}
+			}
+		}
+	}
+
+	.experiment-results {
+		th,
+		td {
+			text-align: right;
+		}
+
+		.status {
+			text-align: center;
+		}
+
+		table {
+			display: none;
+
+			&:first-child {
+				display: table;
+			}
+		}
+	}
+}
