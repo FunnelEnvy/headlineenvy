@@ -1,7 +1,14 @@
-# HeadlineEnvy
+=== HeadlineEnvy - headline testing with Optimizely ===
+Contributors: borkweb, zbtirrell
+Tags: a/b testing, headline, optimization, optimizely, post, page, testing, title
+Requires at least: 3.9
+Tested up to: 4.1.1
+License: MIT
+License URI: http://opensource.org/licenses/MIT
+
 An Optimizely-driven headline tester for WordPress
 
-## Description
+== Description ==
 
 HeadlineEnvy adds the ability to A/B test the titles of your content
 through integration with Optimizely.
@@ -13,7 +20,7 @@ __Features include:__
 * __Experiment results.__ Revisit posts in the dashboard to check the status of headline statistical significance while your headline experiments are executed.
 * __Automatic headline selection.__ Optionally choose to let HeadlineEnvy and Optimizely detect statistically significant winners and automatically update the post with the winning title.
 
-## Installation
+== Installation ==
 
 1. Install HeadlineEnvy either via the WordPress.org plugin directory, or by uploading the files to your server.
 2. After activating HeadlineEnvy, head over to the HeadlineEnvy settings page and enter your Optimizely API key.
@@ -21,3 +28,9 @@ __Features include:__
 4. Select the post types you wish to allow for headline testing.
 5. Visit any post edit page and you will see a new button prompting you to add additional headlines! Enter a few and hit Save/Update/Publish.
 6. That's it!
+
+== Screenshots ==
+
+1. Add an alternate title to begin an experiment.
+2. Multiple headlines added to experiment.
+3. Winning headline!
