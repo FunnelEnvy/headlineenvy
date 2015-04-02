@@ -21,3 +21,7 @@ __Features include:__
 4. Select the post types you wish to allow for headline testing.
 5. Visit any post edit page and you will see a new button prompting you to add additional headlines! Enter a few and hit Save/Update/Publish.
 6. That's it!
+
+## Support
+
+Visit [http://www.funnelenvy.com/headlineenvy-wordpress-optimizely](www.funnelenvy.com/headlineenvy-wordpress-optimizely) official support of this plugin.
