@@ -73,6 +73,7 @@ $svn_ignore_files = array( // paths relative to the top of the svn_repo_path
 	'node_modules/',
 	'package.json',
 	'sass/',
+	'tests/',
 );
 
 // Let's begin...
