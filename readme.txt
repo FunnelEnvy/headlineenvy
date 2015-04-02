@@ -6,7 +6,7 @@ Tested up to: 4.1.1
 License: MIT
 License URI: http://opensource.org/licenses/MIT
 
-An Optimizely-driven headline tester for WordPress
+WordPress headline testing with Optimizely
 
 == Description ==
 
