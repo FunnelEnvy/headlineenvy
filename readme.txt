@@ -3,6 +3,7 @@ Contributors: borkweb, zbtirrell
 Tags: a/b testing, headline, optimization, optimizely, post, page, testing, title
 Requires at least: 3.9
 Tested up to: 4.1.1
+Stable tag: trunk
 License: MIT
 License URI: http://opensource.org/licenses/MIT
 
