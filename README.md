@@ -24,4 +24,4 @@ __Features include:__
 
 ## Support
 
-Visit [http://www.funnelenvy.com/headlineenvy-wordpress-optimizely](www.funnelenvy.com/headlineenvy-wordpress-optimizely) official support of this plugin.
+Visit [http://www.funnelenvy.com/headlineenvy-wordpress-optimizely](www.funnelenvy.com/headlineenvy-wordpress-optimizely) for official support of this plugin.
