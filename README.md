@@ -1,5 +1,5 @@
 # HeadlineEnvy
-An Optimizely-driven headline tester for WordPress
+WordPress headline testing with Optimizely
 
 ## Description
 
