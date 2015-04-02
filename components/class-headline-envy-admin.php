@@ -3,7 +3,6 @@
 class Headline_Envy_Admin {
 	private $core;
 	private $settings_fields = array(
-		'funnelenvy_api_key' => 'sanitize_text_field',
 		'optimizely_api_key' => 'sanitize_text_field',
 		'optimizely_project_id' => 'absint',
 		'optimizely_shell_experiment_id' => 'absint',
@@ -78,9 +77,7 @@ class Headline_Envy_Admin {
 	public function admin_menu() {
 		$options = $this->core->get_options();
 
-		if ( empty( $options['funnelenvy_api_key'] ) ) {
-			add_action( 'admin_notices', array( $this, 'admin_notices_funnelenvy' ) );
-		} elseif ( empty( $options['optimizely_api_key'] ) ) {
+		if ( empty( $options['optimizely_api_key'] ) ) {
 			add_action( 'admin_notices', array( $this, 'admin_notices_optimizely' ) );
 		}//end elseif
 
@@ -122,20 +119,6 @@ class Headline_Envy_Admin {
 			$this->core->schedule_cron();
 		}//end else
 	}//end update_settings
-
-	/**
-	 * hooked to the admin_notices action to inject a message if the FunnelEnvy API key is missing
-	 */
-	public function admin_notices_funnelenvy() {
-		?>
-		<div class="error">
-			<p>
-				<?php esc_html_e( 'It looks like the Headline Envy plugin is activated but still needs your', 'headline-envy' ); ?> <strong><?php esc_html_e( 'FunnelEnvy API key', 'headline-envy' ); ?></strong>!
-				<?php esc_html_e( 'You can set that on the Headline Envy', 'headline-envy' ); ?> <a href="<?php echo esc_url( admin_url( 'admin.php?page=headline-envy-settings' ) ); ?>"><?php esc_html_e( 'settings page', 'headline-envy' ); ?></a>.
-			</p>
-		</div>
-		<?php
-	}//end admin_notices_funnelenvy
 
 	/**
 	 * hooked to the admin_notices action to inject a message if the Optimizely API key is missing
