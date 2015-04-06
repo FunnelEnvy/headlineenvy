@@ -21,7 +21,8 @@ __Features include:__
 * __Experiment results.__ Revisit posts in the dashboard to check the status of headline statistical significance while your headline experiments are executed.
 * __Automatic headline selection.__ Optionally choose to let HeadlineEnvy and Optimizely detect statistically significant winners and automatically update the post with the winning title.
 
-Visit [http://www.funnelenvy.com/headlineenvy-wordpress-optimizely](www.funnelenvy.com/headlineenvy-wordpress-optimizely) for official support of this plugin.
+Visit
+[http://www.funnelenvy.com/headlineenvy-wordpress-optimizely](http://www.funnelenvy.com/headlineenvy-wordpress-optimizely) for official support of this plugin.
 
 == Installation ==
 
