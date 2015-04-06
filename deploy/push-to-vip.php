@@ -47,7 +47,7 @@ if ( ! file_exists( $svn_repo_path ) )
 
 // Repo URLs
 // Remote SVN repo with no trailing slash
-$svn_repo_url = 'https://plugins.svn.wordpress.org/' . $pluginslug;
+$svn_repo_url = 'https://plugins.svn.wordpress.org/' . $pluginslug . '/trunk';
 
 if ( isset( $options['svn'] ) && $options['svn'] )
 {
