@@ -30,8 +30,7 @@ $options = getopt( '', $long_options );
 $pluginslug = 'headlineenvy';
 
 $clean = FALSE;
-if ( isset( $options['clean'] ) || isset( $options['git'] ) || isset( $options['svn-revision'] ) )
-{
+if ( isset( $options['clean'] ) || isset( $options['git'] ) || isset( $options['svn-revision'] ) ) {
 	$clean = TRUE;
 }//end if
 
@@ -40,8 +39,7 @@ if ( isset( $options['clean'] ) || isset( $options['git'] ) || isset( $options['
 $svn_repo_path = '/tmp/' . $pluginslug;
 $git_repo_path = '/tmp/' . $pluginslug . '-git';
 
-if ( ! file_exists( $svn_repo_path ) )
-{
+if ( ! file_exists( $svn_repo_path ) ) {
 	$clean = TRUE;
 }//end if
 
@@ -49,16 +47,14 @@ if ( ! file_exists( $svn_repo_path ) )
 // Remote SVN repo with no trailing slash
 $svn_repo_url = 'https://plugins.svn.wordpress.org/' . $pluginslug . '/trunk';
 
-if ( isset( $options['svn'] ) && $options['svn'] )
-{
+if ( isset( $options['svn'] ) && $options['svn'] ) {
 	$svn_repo_url = $options['svn'];
 	$clean = TRUE;
 }//end if
 
 $git_repo_url = 'git@github.com:FunnelEnvy/headlineenvy.git';
 
-if ( isset( $options['git'] ) && $options['git'] )
-{
+if ( isset( $options['git'] ) && $options['git'] ) {
 	$git_repo_url = $options['git'];
 }//end if
 
@@ -81,8 +77,7 @@ echo "
 Preparing to push $pluginslug to $svn_repo_url
 ";
 
-if ( $clean )
-{
+if ( $clean ) {
 	echo '
 	Cleaning the destination path
 	';
@@ -96,9 +91,7 @@ if ( $clean )
 	";
 
 	passthru( "svn checkout $svn_revision $svn_repo_url $svn_repo_path" );
-}//end if
-else
-{
+} else {
 	echo '
 	Updating the SVN repo at the destination path
 	';
@@ -152,8 +145,7 @@ Marking new files for addition to the SVN repo
 passthru( "svn st $svn_repo_path | grep '^\?' | sed 's/\?\s*//g' | xargs svn add" );
 
 echo 'Now forcibly removing the files that are supposed to be ignored in the svn repo';
-foreach ( $svn_ignore_files as $file )
-{
+foreach ( $svn_ignore_files as $file ) {
 	passthru( "svn rm --force $svn_repo_path/$file" );
 }
 
