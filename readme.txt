@@ -33,6 +33,9 @@ Visit
 5. Visit any post edit page and you will see a new button prompting you to add additional headlines! Enter a few and hit Save/Update/Publish.
 6. That's it!
 
+Note:
+HeadlineEnvy works by attaching to the [the_title](https://codex.wordpress.org/Plugin_API/Filter_Reference/the_title) filter hook.  If your theme or plugin uses a method of getting post titles that does not trigger that hook HeadlineEnvy will be unable to A/B test those cases.
+
 == Screenshots ==
 
 1. Add an alternate title to begin an experiment.
