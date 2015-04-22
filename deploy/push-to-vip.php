@@ -70,6 +70,8 @@ $svn_ignore_files = array( // paths relative to the top of the svn_repo_path
 	'package.json',
 	'sass/',
 	'tests/',
+	'phpunit.xml',
+	'bin/',
 );
 
 // Let's begin...
