@@ -110,6 +110,7 @@ class Headline_Envy_Admin {
 
 		$options = $this->sanitize_settings( $data[ $this->core->option_key ] );
 		$options = $this->create_shell_experiment( $options );
+		$options = wp_parse_args( $options, $this->core->get_options() );
 
 		update_option( $this->core->option_key, $options );
 
