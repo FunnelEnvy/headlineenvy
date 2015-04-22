@@ -329,8 +329,9 @@ class Headline_Envy {
 	public function get_experiment_primary_results( $experiment, $results ) {
 		$primary_results = array();
 
+		// Do we actually have some valid experiment results yet?
 		if ( ! is_array( $results ) ) {
-			return array();
+			return $primary_results;
 		}//end if
 
 		foreach ( $results as $result ) {
