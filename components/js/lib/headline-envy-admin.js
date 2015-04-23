@@ -59,7 +59,7 @@ var headline_envy_admin = headline_envy_admin || {};
 
 		this.load_experiment();
 	};
-	
+
 
 	/**
 	 * add title to the UI
@@ -95,7 +95,7 @@ var headline_envy_admin = headline_envy_admin || {};
 
 		$title
 			.find( '.he-status' )
-			.attr( 'title', data.improvement + ' Improvement, ' + data.conversion_rate + ' Conversion Rate' )
+			.attr( 'title', data.improvement + ' Improvement, ' + data.conversion_rate + ' Conversion rate' )
 			.text( data.improvement );
 
 		this.$add_button.before( $title );
@@ -108,11 +108,12 @@ var headline_envy_admin = headline_envy_admin || {};
 	 */
 	my.remove_title = function( $el, verify ) {
 		var value = $.trim( $el.find( 'input' ).val() );
+		var title = $.trim( $el.find( 'input[type="text"]' ).val() );
 
 		var remove_item = true;
 
 		if ( value && verify ) {
-			remove_item = confirm( 'Are you sure you want to remove: "' + value + '"?' );
+			remove_item = confirm( 'Are you sure you want to remove: "' + title + '"?' );
 		}//end if
 
 		if ( ! remove_item ) {

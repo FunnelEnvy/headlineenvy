@@ -312,8 +312,8 @@ class Headline_Envy {
 					$result = $this->optimizely_experiments[ $post_id ]['primary_results'][ $title['variation'] ];
 
 					$title['winner'] = 'winner' == $result->status ? TRUE : FALSE;
-					$title['improvement'] = round( $result->improvement * 100 ) . '%';
-					$title['conversion_rate'] = round( $result->conversion_rate * 100 ) . '%';
+					$title['improvement'] = round( $result->improvement * 100, 1 ) . '%';
+					$title['conversion_rate'] = round( $result->conversion_rate * 100, 1 ) . '%';
 				}//end foreach
 			}//end if
 
