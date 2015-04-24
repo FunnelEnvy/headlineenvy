@@ -47,24 +47,26 @@
 										<tr>
 											<th><?php esc_html_e( 'Variation', 'headline-envy' ); ?></th>
 											<th><?php esc_html_e( 'Visitors', 'headline-envy' ); ?></th>
-											<th><?php esc_html_e( 'Conversions', 'headline-envy' ); ?></th>
+											<th><?php esc_html_e( 'Unique conversions', 'headline-envy' ); ?></th>
 											<th><?php esc_html_e( 'Conversion rate', 'headline-envy' ); ?></th>
 											<th><?php esc_html_e( 'Improvement', 'headline-envy' ); ?></th>
-											<th><?php esc_html_e( 'Confidence', 'headline-envy' ); ?></th>
+											<th><?php esc_html_e( 'Statistical significance', 'headline-envy' ); ?></th>
 											<th class="status"><?php esc_html_e( 'Status', 'headline-envy' ); ?></th>
 										</tr>
 									</thead>
 									<tbody>
 										<?php
 										foreach ( $goal_data as $variation ) {
+											$improvement  = 'baseline' == $variation->status ? 'baseline' : round( $variation->improvement * 100, 1) . '%';
+											$significance = 'baseline' == $variation->status ? '-' : round( $variation->confidence * 100, 1 ) . '%';
 											?>
 											<tr>
 												<td><a href="<?php echo esc_url( $data['experiment']->edit_url . '?optimizely_x' . $data['experiment']->id . '=' . $variation->variation_id ); ?>"><?php echo esc_html( $variation->variation_name ); ?></td>
 												<td><?php echo number_format( absint( $variation->visitors ) ); ?></td>
 												<td><?php echo number_format( absint( $variation->conversions ) ); ?></td>
-												<td><?php echo esc_html( $variation->conversion_rate ); ?></td>
-												<td><?php echo esc_html( 'baseline' == $variation->status ? 'baseline' : $variation->improvement ); ?></td>
-												<td><?php echo esc_html( 'baseline' == $variation->status ? '-' : $confidence ); ?></td>
+												<td><?php echo esc_html( round( $variation->conversion_rate * 100, 1 ) ) . '%'; ?></td>
+												<td><?php echo esc_html( $improvement ); ?></td>
+												<td><?php echo esc_html( $significance ); ?></td>
 												<td class="status">
 													<?php
 													switch ( $variation->status ) {
