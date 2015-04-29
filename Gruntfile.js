@@ -45,7 +45,38 @@ module.exports = function( grunt ) {
 					'compass:dist'
 				]
 			}
-		}
+		},
+		copy: {
+			deploy: {
+				files: [{
+					expand: true,
+					src: [
+						'**',
+						'!**/assets/**',
+						'!**/bin/**',
+						'!**/deploy/**',
+						'!**/sass/**',
+						'!**/node_modules/**',
+						'!**/tests/**',
+						'!config.rb',
+						'!Gruntfile.js',
+						'!package.json',
+						'!phpunit.xml',
+						'!README.md'
+					],
+					dest: 'deploy/'
+				}],
+			},
+		},
+		wp_deploy: {
+			deploy: {
+				options: {
+					plugin_slug: 'headlineenvy',
+					build_dir: 'deploy'
+				},
+			}
+		},
+		clean: [ 'deploy' ]
 	});
 
 	// Default task.
@@ -55,5 +86,11 @@ module.exports = function( grunt ) {
 		'newer:uglify',
 		'compass:dist',
 		'cssmin'
+	] );
+	
+	grunt.registerTask( 'deploy', [
+		'copy:deploy',
+		//'wp_deploy:deploy',
+		//'clean'
 	] );
 };
