@@ -90,7 +90,7 @@ module.exports = function( grunt ) {
 	
 	grunt.registerTask( 'deploy', [
 		'copy:deploy',
-		//'wp_deploy:deploy',
-		//'clean'
+		'wp_deploy:deploy',
+		'clean'
 	] );
 };
