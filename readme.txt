@@ -3,7 +3,7 @@ Contributors: borkweb, zbtirrell, methnen
 Tags: a/b testing, headline, optimization, optimizely, post, page, testing, title
 Requires at least: 3.9
 Tested up to: 4.2
-Stable tag: 1.1
+Stable tag: 1.0.1
 License: MIT
 License URI: http://opensource.org/licenses/MIT
 
@@ -46,7 +46,7 @@ HeadlineEnvy works by attaching to the [the_title](https://codex.wordpress.org/P
 
 == Changelog ==
 
-= 1.1 =
+= 1.0.1 =
 
 * Fixed a few PHP warnings
 * Normalized naming conventions to match Optimizely

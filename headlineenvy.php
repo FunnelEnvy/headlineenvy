@@ -1,7 +1,7 @@
 <?php
 /**
  * Plugin Name: HeadlineEnvy
- * Version: 1.1
+ * Version: 1.0.1
  * Plugin URI: http://www.funnelenvy.com/
  * Description: Leverages Optimizely to A/B test post headlines.
  * Author: FunnelEnvy
