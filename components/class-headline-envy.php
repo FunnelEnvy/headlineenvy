@@ -175,8 +175,9 @@ class Headline_Envy {
 		}//end if
 
 		foreach ( $experiments as $experiment ) {
-			preg_match( '/HeadlineEnvy \[([0-9]+)\]:/', $experiment->description, $matches );
+			preg_match( '/HeadlineEnvy \[([0-9]+)\](\[([a-z]+)\])?:/', $experiment->description, $matches );
 			$post_id = absint( $matches[1] );
+			$type    = isset( $matches[3] ) ? $matches[3] : 'title';
 
 			if ( ! $post_id || 'Running' !== $experiment->status ) {
 				continue;
@@ -191,7 +192,7 @@ class Headline_Envy {
 					continue;
 				}//end if
 
-				$this->select_winner( $post_id, $result->variation_id );
+				$this->select_winner( $post_id, $type, $result->variation_id );
 				break;
 			}//end foreach
 		}//end foreach
@@ -222,7 +223,7 @@ class Headline_Envy {
 			return $title;
 		}//end if
 
-		$experiment = $this->get_experiment( $id, FALSE );
+		$experiment = $this->get_experiment( $id, 'title', FALSE );
 
 		if ( ! $experiment || ! $experiment['experiment_titles'] ) {
 			return $title;
@@ -234,9 +235,9 @@ class Headline_Envy {
 	/**
 	 * Select winner
 	 */
-	public function select_winner( $post_id, $variation_id ) {
+	public function select_winner( $post_id, $type = 'title', $variation_id ) {
 		// get title for the variant
-		$experiment = $this->get_experiment( $post_id, FALSE );
+		$experiment = $this->get_experiment( $post_id, $type, FALSE );
 
 		if ( $variation_id > 0 ) {
 			$new_title = FALSE;
@@ -285,39 +286,42 @@ class Headline_Envy {
 	/**
 	 * Retrieves a post's headline variations
 	 */
-	public function get_experiment( $post_id, $include_live_optimizely_data = TRUE ) {
-		$meta = get_post_meta( $post_id, 'headline-envy', TRUE );
+	public function get_experiment( $post_id, $type = 'title', $include_live_optimizely_data = TRUE ) {
+		$meta = $this->get_post_meta( $post_id );
+		$meta = $meta[ $type ];
 
-		if ( empty( $meta['experiment_titles'] ) || empty( $meta['experiment_id'] ) || ! $this->optimizely() ) {
+		$meta_key = 'image' == $type ? 'experiment_images' : 'experiment_titles';
+
+		if ( empty( $meta[ $meta_key ] ) || empty( $meta['experiment_id'] ) || ! $this->optimizely() ) {
 			return array();
 		}//end if
 
 		if ( $include_live_optimizely_data ) {
 			// check the object cache, if it is empty, fill it!
-			if ( empty( $this->optimizely_experiments[ $post_id ] ) ) {
-				$this->optimizely_experiments[ $post_id ]['experiment_titles'] = $meta['experiment_titles'];
+			if ( empty( $this->optimizely_experiments[ $post_id ]['title'] ) ) {
+				$this->optimizely_experiments[ $post_id ][ $type ][ $meta_key ] = $meta[ $meta_key ];
 
 				$experiment = $this->optimizely()->get_experiment( $meta['experiment_id'] );
-				$this->optimizely_experiments[ $post_id ]['experiment'] = $experiment;
+				$this->optimizely_experiments[ $post_id ][ $type ]['experiment'] = $experiment;
 
 				$results = $this->optimizely()->get_experiment_results( $meta['experiment_id'] );
-				$this->optimizely_experiments[ $post_id ]['results'] = $results;
-				$this->optimizely_experiments[ $post_id ]['primary_results'] = $this->get_experiment_primary_results( $experiment, $results );
+				$this->optimizely_experiments[ $post_id ][ $type ]['results'] = $results;
+				$this->optimizely_experiments[ $post_id ][ $type ]['primary_results'] = $this->get_experiment_primary_results( $experiment, $results );
 
-				foreach ( $this->optimizely_experiments[ $post_id ]['experiment_titles'] as &$title ) {
-					if ( empty( $this->optimizely_experiments[ $post_id ]['primary_results'][ $title['variation'] ] ) ) {
+				foreach ( $this->optimizely_experiments[ $post_id ][ $type ][ $meta_key ] as &$item ) {
+					if ( empty( $this->optimizely_experiments[ $post_id ][ $type ]['primary_results'][ $item['variation'] ] ) ) {
 						continue;
 					}//end if
 
-					$result = $this->optimizely_experiments[ $post_id ]['primary_results'][ $title['variation'] ];
+					$result = $this->optimizely_experiments[ $post_id ][ $type ]['primary_results'][ $item['variation'] ];
 
-					$title['winner'] = 'winner' == $result->status ? TRUE : FALSE;
-					$title['improvement'] = round( $result->improvement * 100, 1 ) . '%';
-					$title['conversion_rate'] = round( $result->conversion_rate * 100, 1 ) . '%';
+					$item['winner'] = 'winner' == $result->status ? TRUE : FALSE;
+					$item['improvement'] = round( $result->improvement * 100, 1 ) . '%';
+					$item['conversion_rate'] = round( $result->conversion_rate * 100, 1 ) . '%';
 				}//end foreach
 			}//end if
 
-			$meta['experiment_titles'] = $this->optimizely_experiments[ $post_id ]['experiment_titles'];
+			$meta[ $meta_key ] = $this->optimizely_experiments[ $post_id ][ $type ][ $meta_key ];
 		}//end if
 
 		return $meta;
@@ -365,6 +369,22 @@ class Headline_Envy {
 		}//end if
 
 		return $options;
+	}//end get_options
+	
+	/**
+	 * Gets the HeadlineEnvy meta for a post
+	 */
+	public function get_post_meta( $post_id ) {
+		$meta = get_post_meta( $post_id, 'headline-envy', TRUE );
+
+		if ( ! isset( $meta['title'] ) ) {
+			$meta = array(
+				'title' => $meta,
+				'image' => '',
+			);
+		}
+
+		return $meta;
 	}//end get_options
 }//end class
 

@@ -6,6 +6,7 @@ class Headline_Envy_Admin {
 		'optimizely_api_key' => 'sanitize_text_field',
 		'optimizely_project_id' => 'absint',
 		'optimizely_shell_experiment_id' => 'absint',
+		'test_images' => 'absint',
 		'auto_select_winner' => 'absint',
 		'post_types' => 'sanitize_text_field',
 	);
@@ -51,21 +52,38 @@ class Headline_Envy_Admin {
 		if ( 'post.php' == $hook ) {
 			global $post;
 
-			$experiment = $this->core->get_experiment( $post->ID );
+			$title_experiment = $this->core->get_experiment( $post->ID );
+			$image_experiment = $this->core->get_experiment( $post->ID, 'image' );
 
-			if ( $experiment ) {
+			if ( $title_experiment ) {
 				$data = array(
 					'experiment_titles' => array(),
 				);
 
-				if ( ! empty( $experiment['experiment_titles'] ) ) {
-					foreach ( $experiment['experiment_titles'] as $title ) {
+				if ( ! empty( $title_experiment['experiment_titles'] ) ) {
+					foreach ( $title_experiment['experiment_titles'] as $title ) {
 						$data['experiment_titles'][] = $title;
 					}//end foreach
 				}//end if
-
-				wp_localize_script( 'headline-envy-admin', 'headline_envy_admin', $data );
 			}//end if
+
+			if ( $image_experiment ) {
+				$data = array(
+					'experiment_images' => array(),
+				);
+
+				if ( ! empty( $title_experiment['experiment_images'] ) ) {
+					foreach ( $title_experiment['experiment_images'] as $image ) {
+						$data['experiment_titles'][] = $image;
+					}//end foreach
+				}//end if
+			}
+
+			$data['test_images'] = $this->core->get_options( 'test_images' );
+
+			if ( isset( $data ) ) {
+				wp_localize_script( 'headline-envy-admin', 'headline_envy_admin', $data );
+			}
 		}//end if
 
 		wp_enqueue_style( 'headline-envy' );
@@ -222,7 +240,7 @@ class Headline_Envy_Admin {
 
 		if ( ! empty( $_POST['he-winner'] ) ) {
 			remove_action( 'save_post', array( $this, 'save_post' ) );
-			$this->core->select_winner( $post->ID, absint( $_POST['he-winner'] ) );
+			$this->core->select_winner( $post->ID, 'title', absint( $_POST['he-winner'] ) );
 			return;
 		}//end if
 
@@ -300,6 +318,10 @@ class Headline_Envy_Admin {
 	 */
 	public function sanitize_settings( $data ) {
 		$sanitized = array();
+
+		// Handle checkboxes where a missing value means they were deselected
+		$sanitized['test_images']        = isset( $data['test_images'] ) ? 1 : '';
+		$sanitized['auto_select_winner'] = isset( $data['auto_select_winner'] ) ? 1 : '';
 
 		foreach ( $this->settings_fields as $field => $sanitization ) {
 			if ( ! isset( $data[ $field ] ) ) {
@@ -438,7 +460,7 @@ class Headline_Envy_Admin {
 	 * @param $titles array Collection of titles on the post (as a string)
 	 */
 	public function save_titles( $post_id, $titles ) {
-		$experiment = $this->core->get_experiment( $post_id, FALSE );
+		$experiment = $this->core->get_experiment( $post_id, 'title', FALSE );
 
 		$junk_variation = FALSE;
 		if ( empty( $experiment['experiment_id'] ) ) {
@@ -447,7 +469,7 @@ class Headline_Envy_Admin {
 				return;
 			}//end if
 
-			$experiment = $this->initialize_experiment( $post_id, $experiment );
+			$experiment = $this->initialize_experiment( $post_id, 'title', $experiment );
 			$variations = $this->core->optimizely()->get_variations( $experiment['experiment_id'] );
 
 			$junk_variation = $variations[1]->id;
@@ -516,11 +538,11 @@ class Headline_Envy_Admin {
 	/**
 	 * Initializes an experiment for a post
 	 */
-	public function initialize_experiment( $post_id, $experiment ) {
+	public function initialize_experiment( $post_id, $type = 'title', $experiment ) {
 		$options = $this->core->get_options();
 
 		$experiment_args = array(
-			'description' => apply_filters( 'headline_envy_experiment_description', "HeadlineEnvy [$post_id]: " . get_the_title( $post_id ), $post_id ),
+			'description' => apply_filters( 'headline_envy_experiment_description', "HeadlineEnvy [$post_id][$type]: " . get_the_title( $post_id ), $post_id ),
 			'edit_url' => get_permalink( $post_id ),
 			'url_conditions' => array(
 				(object) array(

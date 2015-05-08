@@ -6,6 +6,19 @@ var headline_envy_admin = headline_envy_admin || {};
 	my.event = my.event || {};
 
 	my.init = function() {
+		this.init_titles();
+		this.init_images();
+		
+		$( document ).on( 'click', '#publish', function( e ) {
+			if ( my.edited_titles ) {
+				$( 'body' ).addClass( 'saving-post' );
+			}//end if
+		} );
+		
+		this.load_experiments();
+	};
+
+	my.init_titles = function() {
 		this.edited_titles = false;
 		this.experiment_titles = this.experiment_titles || [];
 
@@ -42,12 +55,6 @@ var headline_envy_admin = headline_envy_admin || {};
 			my.edited_titles = true;
 		} );
 
-		$( document ).on( 'click', '#publish', function( e ) {
-			if ( my.edited_titles ) {
-				$( 'body' ).addClass( 'saving-post' );
-			}//end if
-		} );
-
 		$( document ).on( 'change', '.experiment-options select', function( e ) {
 			var $el = $( this );
 			var goal = $el.val();
@@ -56,10 +63,14 @@ var headline_envy_admin = headline_envy_admin || {};
 			$results.find( 'table' ).hide();
 			$results.find( 'table[data-goal="' + goal + '"]' ).css( 'display', 'table' );
 		} );
-
-		this.load_experiment();
 	};
 
+	my.init_images = function() {
+		if ( '1' !== this.test_images ) {
+			return;
+		}
+		console.log( this );
+	};
 
 	/**
 	 * add title to the UI
@@ -126,9 +137,9 @@ var headline_envy_admin = headline_envy_admin || {};
 	};
 
 	/**
-	 * load the experiment with pre-set titles
+	 * load the experiments
 	 */
-	my.load_experiment = function() {
+	my.load_experiments = function() {
 		for ( var i in this.experiment_titles ) {
 			this.add_title( this.experiment_titles[ i ] );
 		}//end for
