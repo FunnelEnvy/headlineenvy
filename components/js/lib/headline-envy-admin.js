@@ -3,18 +3,20 @@ var headline_envy_admin = headline_envy_admin || {};
 ( function( $, my ) {
 	'use strict';
 
+	my.set_featured_image = wp.media.featuredImage.set;
+
 	my.event = my.event || {};
 
 	my.init = function() {
 		this.init_titles();
 		this.init_images();
-		
+
 		$( document ).on( 'click', '#publish', function( e ) {
 			if ( my.edited_titles ) {
 				$( 'body' ).addClass( 'saving-post' );
 			}//end if
 		} );
-		
+
 		this.load_experiments();
 	};
 
@@ -69,7 +71,21 @@ var headline_envy_admin = headline_envy_admin || {};
 		if ( '1' !== this.test_images ) {
 			return;
 		}
-		console.log( this );
+
+		this.$thumbnail_container = $( document.getElementById( 'postimagediv' ) );
+		this.image_template = $( document.getElementById( 'he-image-template' ) ).html();
+
+		this.$thumbnail_container.append( $( document.getElementById( 'he-image-ui' ) ).html() );
+
+		this.$image_ui = this.$thumbnail_container.find( '.he-image-ui' );
+
+		$( this ).on( 'featured_image_set', function( e ) {
+			my.$image_ui.addClass( 'active' );
+		} );
+
+		$( document ).on( 'click', '#remove-post-thumbnail', function( e ) {
+			my.$image_ui.removeClass( 'active' );
+		} );
 	};
 
 	/**
@@ -154,6 +170,14 @@ var headline_envy_admin = headline_envy_admin || {};
 		} );
 
 		this.$title_container.after( $load_marker );
+	};
+
+	/**
+	 * Monkey patch the featured image setting so we know when it's happened
+	 */
+	wp.media.featuredImage.set = function( attachment_id ) {
+		my.set_featured_image( attachment_id );
+		$( my ).trigger({ type: 'featured_image_set', attachment_id: attachment_id });
 	};
 
 	$( function() {

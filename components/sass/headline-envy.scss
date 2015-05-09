@@ -83,6 +83,15 @@
 		}
 	}
 
+	&.he-image-ui {
+		display: none;
+		padding: 0 12px 16px;
+		
+		&.active {
+			display: inline-block;
+		}
+	}
+
 	// don't show the "Pick Winner" button when creating a new post
 	.select-title {
 		display: none;
@@ -113,7 +122,8 @@
 		}
 	}
 
-	&.has-experiment {
+	&.has-title-experiment,
+	&.has-image-experiment {
 		.view-experiment {
 			display: inline-block;
 		}

@@ -280,17 +280,37 @@ class Headline_Envy_Admin {
 			return;
 		}//end if
 
-		$experiment = $this->core->get_experiment( $post->ID );
+		$title_experiment = $this->core->get_experiment( $post->ID );
 
-		$container_class = '';
+		$title_container_class = '';
 
-		if ( $experiment ) {
-			$container_class = 'has-experiment';
+		if ( $title_experiment ) {
+			$container_class = 'has-title-experiment';
 		}//end if
 
-		$experiment_id = empty( $experiment['experiment_id'] ) ? 0 : $experiment['experiment_id'];
+		$title_experiment_id = empty( $title_experiment['experiment_id'] ) ? 0 : $title_experiment['experiment_id'];
 
 		include_once __DIR__ . '/templates/title-ui.php';
+		
+		if ( ! $this->core->get_options( 'test_images' ) ) {
+			return;
+		}
+		
+		$image_experiment = $this->core->get_experiment( $post->ID, 'image' );
+
+		$image_container_class = '';
+
+		if ( $image_experiment ) {
+			$image_container_class = 'has-image-experiment';
+		}//end if
+
+		if ( has_post_thumbnail( $post->ID ) ) {
+			$image_container_class .= ' active';
+		}
+
+		$image_experiment_id = empty( $image_experiment['experiment_id'] ) ? 0 : $image_experiment['experiment_id'];
+
+		include_once __DIR__ . '/templates/image-ui.php';
 	}//end edit_form_before_permalink
 
 	/**

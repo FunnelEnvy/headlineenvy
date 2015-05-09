@@ -63,6 +63,13 @@
   margin-top: 1rem;
   padding: .5rem;
 }
+.he-container.he-image-ui {
+  display: none;
+  padding: 0 12px 16px;
+}
+.he-container.he-image-ui.active {
+  display: inline-block;
+}
 .he-container .select-title {
   display: none;
 }
@@ -86,7 +93,7 @@
 .he-container .view-experiment:hover {
   opacity: 1;
 }
-.he-container.has-experiment .view-experiment {
+.he-container.has-title-experiment .view-experiment, .he-container.has-image-experiment .view-experiment {
   display: inline-block;
 }
 .he-container .he-title {
