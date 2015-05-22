@@ -27,6 +27,7 @@ class Headline_Envy {
 			$this->admin();
 		} else {
 			add_filter( 'the_title', array( $this, 'the_title' ), 0, 2 );
+			add_filter( 'post_thumbnail_html', array( $this, 'post_thumbnail_html' ), 0, 5 );
 		}//end else
 	}//end __construct
 
@@ -213,8 +214,8 @@ class Headline_Envy {
 	/**
 	 * Hooked to the the_title filter to wrap text in our custom element
 	 */
-	public function the_title( $title, $id ) {
-		$post = get_post( $id );
+	public function the_title( $title, $post_id ) {
+		$post = get_post( $post_id );
 		$options = $this->get_options();
 
 		// is this a valid post type for headline experiments?
@@ -223,7 +224,7 @@ class Headline_Envy {
 			return $title;
 		}//end if
 
-		$experiment = $this->get_experiment( $id, 'title', FALSE );
+		$experiment = $this->get_experiment( $post_id, 'title', FALSE );
 
 		if ( ! $experiment || ! $experiment['experiment_titles'] ) {
 			return $title;
@@ -233,12 +234,80 @@ class Headline_Envy {
 	}//end the_title
 
 	/**
+	 * Hooked to the the_title filter to wrap text in our custom element
+	 */
+	public function post_thumbnail_html( $html, $post_id, $post_thumbnail_id, $size, $attr ) {
+		$options = $this->get_options();
+
+		// If we aren't testing images we'll stop here
+		if ( ! $options['test_images'] ) {
+			return $html;
+		}
+
+		$post = get_post( $post_id );
+
+		// is this a valid post type for headline experiments?
+		$whitelisted_post_types = apply_filters( 'headline_envy_post_types', $options['post_types'] );
+		if ( ! isset( $post->post_type ) || ! in_array( $post->post_type, $whitelisted_post_types ) ) {
+			return $html;
+		}//end if
+
+		$experiment = $this->get_experiment( $post_id, 'image', FALSE );
+
+		if ( ! $experiment || ! $experiment['experiment_images'] ) {
+			return $html;
+		}//end if
+		
+		$additions = ' data-experiment="' . esc_attr( $experiment['experiment_id'] ) . '" data-size="' . esc_attr( $size ) . '"$0';
+		
+		return preg_replace( '#/?>$#', $additions, $html );
+	}//end the_title
+
+	/**
 	 * Select winner
 	 */
 	public function select_winner( $post_id, $type = 'title', $variation_id ) {
 		// get title for the variant
 		$experiment = $this->get_experiment( $post_id, $type, FALSE );
 
+		// Set the title to the new 'winning' value
+		if ( 'title' == $type ) {
+			$experiment = $this->set_winning_title( $post_id, $experiment, $variation_id );
+		} elseif ( 'image' == $type ) {
+			$experiment = $this->set_winning_image( $post_id, $experiment, $variation_id );
+		}
+
+		// Get the existing meta
+		$meta = $this->get_post_meta( $post_id );
+
+		// Make sure the key is initialized
+		if ( ! isset( $meta['previous_experiments'] ) ) {
+			$meta['previous_experiments'] = array();
+		}//end if
+
+		// pause the experiment
+		$this->optimizely()->update_experiment( $experiment['experiment_id'], array(
+			'status' => 'Archived',
+		) );
+
+		// archive experiment id
+		$experiment['previous_experiments'][ $type ][] = $experiment['experiment_id'];
+
+		// since the experiment is no longer running for this post, let's remove the experiment_id key
+		unset( $experiment['experiment_id'] );
+
+		$meta[ $type ] = $experiment;
+
+		// save experiment to post meta!
+		update_post_meta( $post_id, 'headline-envy', $meta );
+
+		return TRUE;
+	}//end select_winner
+
+	/**
+	 * Update the post with the winning title
+	 */
+	public function set_winning_title( $post_id, $experiment, $variation_id ) {
 		if ( $variation_id > 0 ) {
 			$new_title = FALSE;
 			foreach ( $experiment['experiment_titles'] as $title ) {
@@ -261,27 +330,34 @@ class Headline_Envy {
 		// clear experiment titles
 		$experiment['experiment_titles'] = array();
 
-		// Make sure the key is initialized
-		if ( ! isset( $experiment['previous_experiments'] ) ) {
-			$experiment['previous_experiments'] = array();
+		return $experiment;
+	}
+
+	/**
+	 * Update the post with the winning image
+	 */
+	public function set_winning_image( $post_id, $experiment, $variation_id ) {
+		if ( $variation_id > 0 ) {
+			$new_title = FALSE;
+			foreach ( $experiment['experiment_images'] as $image ) {
+				if ( $variation_id == $image['variation'] ) {
+					$new_thumbnail = $image['value'];
+				}//end if
+			}// end foreach
+
+			if ( ! $new_thumbnail ) {
+				return FALSE;
+			}//end if
+
+			// update post thumbnail
+			set_post_thumbnail( $post_id, $new_thumbnail );
 		}//end if
 
-		// archive experiment id
-		$experiment['previous_experiments'][] = $experiment['experiment_id'];
+		// clear experiment titles
+		$experiment['experiment_images'] = array();
 
-		// pause the experiment
-		$this->optimizely()->update_experiment( $experiment['experiment_id'], array(
-			'status' => 'Archived',
-		) );
-
-		// since the experiment is no longer running for this post, let's remove the experiment_id key
-		unset( $experiment['experiment_id'] );
-
-		// save experiment to post meta!
-		update_post_meta( $post_id, 'headline-envy', $experiment );
-
-		return TRUE;
-	}//end select_winner
+		return $experiment;
+	}
 
 	/**
 	 * Retrieves a post's headline variations
@@ -298,7 +374,7 @@ class Headline_Envy {
 
 		if ( $include_live_optimizely_data ) {
 			// check the object cache, if it is empty, fill it!
-			if ( empty( $this->optimizely_experiments[ $post_id ]['title'] ) ) {
+			if ( empty( $this->optimizely_experiments[ $post_id ][ $type ] ) ) {
 				$this->optimizely_experiments[ $post_id ][ $type ][ $meta_key ] = $meta[ $meta_key ];
 
 				$experiment = $this->optimizely()->get_experiment( $meta['experiment_id'] );
@@ -370,7 +446,7 @@ class Headline_Envy {
 
 		return $options;
 	}//end get_options
-	
+
 	/**
 	 * Gets the HeadlineEnvy meta for a post
 	 */
@@ -382,7 +458,12 @@ class Headline_Envy {
 				'title' => $meta,
 				'image' => '',
 			);
-		}
+
+			if ( isset( $meta['title']['previous_experiments'] ) ) {
+				$meta['previous_experiments']['title'] = $meta['title']['previous_experiments'];
+				unset( $meta['title']['previous_experiments'] );
+			}//end if
+		}//end if
 
 		return $meta;
 	}//end get_options

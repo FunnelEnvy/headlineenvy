@@ -3,6 +3,7 @@ var headline_envy_admin = headline_envy_admin || {};
 ( function( $, my ) {
 	'use strict';
 
+	// We need to save this method to our own class var so that we can monkey patch it
 	my.set_featured_image = wp.media.featuredImage.set;
 
 	my.event = my.event || {};
@@ -11,13 +12,25 @@ var headline_envy_admin = headline_envy_admin || {};
 		this.init_titles();
 		this.init_images();
 
-		$( document ).on( 'click', '#publish', function( e ) {
+		$( document ).on( 'click', '#save-post, #wp-preview, #post-preview, #publish', function( e ) {
 			if ( my.edited_titles ) {
 				$( 'body' ).addClass( 'saving-post' );
 			}//end if
 		} );
 
-		this.load_experiments();
+		this.load_title_experiments();
+		this.load_image_experiments();
+
+		// once we've loaded the experiments, let's add a field we can watch for on submission
+		// so we don't accidentally purge experiments in the event of a JS error or an early
+		// form submission.
+		var $load_marker = $( '<input>', {
+			name: 'headline_envy_loaded',
+			type: 'hidden',
+			value: 'true'
+		} );
+
+		this.$title_container.after( $load_marker );
 	};
 
 	my.init_titles = function() {
@@ -72,6 +85,11 @@ var headline_envy_admin = headline_envy_admin || {};
 			return;
 		}
 
+		this.experiment_images = this.experiment_images || [];
+
+		this.current_images = {};
+		this.file_frame = wp.media.frames.file_frame;
+
 		this.$thumbnail_container = $( document.getElementById( 'postimagediv' ) );
 		this.image_template = $( document.getElementById( 'he-image-template' ) ).html();
 
@@ -79,12 +97,82 @@ var headline_envy_admin = headline_envy_admin || {};
 
 		this.$image_ui = this.$thumbnail_container.find( '.he-image-ui' );
 
-		$( this ).on( 'featured_image_set', function( e ) {
+		$( document ).on( 'featured_image_set', function( e ) {
 			my.$image_ui.addClass( 'active' );
 		} );
 
 		$( document ).on( 'click', '#remove-post-thumbnail', function( e ) {
 			my.$image_ui.removeClass( 'active' );
+		} );
+
+		$( document ).on( 'click', '.he-image-ui .dashicons-dismiss', function( e ) {
+			e.preventDefault();
+
+			my.remove_image( $( this ).closest( '.he-image' ), true );
+			my.edited_titles = true;
+		});
+
+		$( document ).on( 'click', '#postimagediv .select-image', function() {
+			var $container = $( this ).closest( '.he-container' );
+			$container.addClass( 'image-select' );
+		});
+
+		$( document ).on( 'click', '#postimagediv .cancel-select-image', function() {
+			var $container = $( this ).closest( '.he-container' );
+			$container.removeClass( 'image-select' );
+
+			$container.find( '[name="he-image-winner"]:checked' ).prop( 'checked', false );
+		});
+
+		$( document ).on( 'click', '.he-container .add-image', function( e ) {
+			e.preventDefault();
+
+			// Instantiate a file/media frame object for our use
+			my.file_frame = wp.media( {
+				title: my.alternate_image_select_title,
+				button: {
+					text: my.alternate_image_select_button
+				},
+				library : {
+					type : 'image'
+				}
+			} );
+
+			// Put the user in the right place
+		    my.file_frame.on( 'toolbar:create:select', function() {
+				my.file_frame.state().set( 'filterable', 'uploaded' );
+		    } );
+
+			// Watch for the user to select 'set' the image they want
+		    my.file_frame.on( 'select', function () {
+				var attachment = my.file_frame.state().get('selection').first().toJSON();
+
+				// Make sure the image hasn't already been used
+				if (
+					   'undefined' !== typeof my.current_images[ attachment.id ]
+					|| attachment.id === Number( my.thumbnail_id )
+				) {
+					alert( my.image_already_used );
+					return;
+				}
+
+				var ratio = 256 / attachment.width;
+
+				var data = {
+					attachment: {
+						url: attachment.url,
+						width: 256,
+						height: attachment.height * ratio,
+						title: attachment.title
+					},
+					value: attachment.id
+				};
+
+				my.add_image( data );
+		    } );
+
+			// Open the file/media frame
+			my.file_frame.open();
 		} );
 	};
 
@@ -125,9 +213,60 @@ var headline_envy_admin = headline_envy_admin || {};
 			.attr( 'title', data.improvement + ' Improvement, ' + data.conversion_rate + ' Conversion rate' )
 			.text( data.improvement );
 
-		this.$add_button.before( $title );
+			this.$add_button.before( $title );
 
 		$( document ).trigger( 'headline-envy-add-title' );
+	};
+
+	/**
+	 * add an image to the UI
+	 */
+	my.add_image = function( data ) {
+		data = data || {};
+
+		var $image  = $( this.image_template );
+		var $images = this.$thumbnail_container.find( '.he-image' );
+
+		data.num = data.num || $images.length + 1;
+		data.id = data.id || 'he-image-' + data.num;
+		data.improvement = data.improvement || '0%';
+		data.conversion_rate = data.conversion_rate || '0%';
+
+		$image
+			.attr( 'data-variation', data.variation || '' )
+			.attr( 'data-winner', data.winner || 'false' );
+
+		$image
+			.find( 'input[type="hidden"]' )
+			.attr( 'id', data.id )
+			.attr( 'name', 'headline_envy_image[' + data.num + ']' )
+			.val( data.value || '' );
+
+		$image
+			.find( 'input[type="radio"]' )
+			.val( data.variation || '' );
+
+		$image
+			.find( 'label' )
+			.attr( 'for', data.id );
+
+		$image
+			.find( '.he-status' )
+			.attr( 'title', data.improvement + ' Improvement, ' + data.conversion_rate + ' Conversion rate' )
+			.text( data.improvement );
+
+		$image
+			.find( 'img' )
+			.attr( 'src', data.attachment.url )
+			.attr( 'width', data.attachment.width )
+			.attr( 'height', data.attachment.height )
+			.attr( 'alt', data.attachment.title );
+
+		this.current_images[ data.value ] = true;
+
+		this.$thumbnail_container.find( '.he-image:last' ).after( $image );
+
+		$( document ).trigger( 'headline-envy-add-image' );
 	};
 
 	/**
@@ -140,7 +279,7 @@ var headline_envy_admin = headline_envy_admin || {};
 		var remove_item = true;
 
 		if ( value && verify ) {
-			remove_item = confirm( 'Are you sure you want to remove: "' + title + '"?' );
+			remove_item = confirm( my.title_remove_confirm + ' "' + title + '"?' );
 		}//end if
 
 		if ( ! remove_item ) {
@@ -153,31 +292,65 @@ var headline_envy_admin = headline_envy_admin || {};
 	};
 
 	/**
-	 * load the experiments
+	 * handles removing an alternate image
 	 */
-	my.load_experiments = function() {
+	my.remove_image = function( $el, verify ) {
+		var value = $.trim( $el.find( 'input[type="hidden"]' ).val() );
+		var title = $.trim( $el.find( 'img' ).attr( 'alt' ) );
+
+		var remove_item = true;
+
+		if ( value && verify ) {
+			remove_item = confirm( my.image_remove_confirm + ' "' + title + '"?' );
+		}//end if
+
+		if ( ! remove_item ) {
+			return;
+		}//end if
+
+		$el.remove();
+
+		$( document ).trigger( 'headline-envy-remove-image' );
+	};
+
+	/**
+	 * load the title experiments
+	 */
+	my.load_title_experiments = function() {
 		for ( var i in this.experiment_titles ) {
 			this.add_title( this.experiment_titles[ i ] );
 		}//end for
+	};
 
-		// once we've loaded titles, let's add a field we can watch for on submission
-		// so we don't accidentally purge titles in the event of a JS error or an early
-		// form submission.
-		var $load_marker = $( '<input>', {
-			name: 'headline_envy_titles_loaded',
-			type: 'hidden',
-			value: 'true'
-		} );
+	/**
+	 * load the image experiments
+	 */
+	my.load_image_experiments = function() {
+		if ( '1' !== this.test_images ) {
+			return;
+		}
 
-		this.$title_container.after( $load_marker );
+		for ( var i in this.experiment_images ) {
+			my.add_image( this.experiment_images[ i ] );
+		}//end for
 	};
 
 	/**
 	 * Monkey patch the featured image setting so we know when it's happened
 	 */
 	wp.media.featuredImage.set = function( attachment_id ) {
+		// Make sure the image isn't a current alternate
+		if ( 'undefined' !== typeof my.current_images[ attachment_id ] ) {
+			alert( my.image_already_used );
+			return;
+		}
+
+		// Update the thumbnail_id value
+		my.thumbnail_id = attachment_id;
+		// Here we're just calling the very same functino we just monkey patched
 		my.set_featured_image( attachment_id );
-		$( my ).trigger({ type: 'featured_image_set', attachment_id: attachment_id });
+		// Give ourselves a reliable way to know when a featured image has been set.
+		$( document ).trigger({ type: 'featured_image_set', attachment_id: attachment_id });
 	};
 
 	$( function() {

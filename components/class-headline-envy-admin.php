@@ -55,10 +55,10 @@ class Headline_Envy_Admin {
 			$title_experiment = $this->core->get_experiment( $post->ID );
 			$image_experiment = $this->core->get_experiment( $post->ID, 'image' );
 
+			$data = array();
+
 			if ( $title_experiment ) {
-				$data = array(
-					'experiment_titles' => array(),
-				);
+				$data['experiment_titles'] = array();
 
 				if ( ! empty( $title_experiment['experiment_titles'] ) ) {
 					foreach ( $title_experiment['experiment_titles'] as $title ) {
@@ -68,18 +68,32 @@ class Headline_Envy_Admin {
 			}//end if
 
 			if ( $image_experiment ) {
-				$data = array(
-					'experiment_images' => array(),
-				);
+				$data['experiment_images'] = array();
 
-				if ( ! empty( $title_experiment['experiment_images'] ) ) {
-					foreach ( $title_experiment['experiment_images'] as $image ) {
-						$data['experiment_titles'][] = $image;
+				if ( ! empty( $image_experiment['experiment_images'] ) ) {
+					foreach ( $image_experiment['experiment_images'] as $image ) {
+						$src = wp_get_attachment_image_src( $image['value'], 'original' );
+
+						$image['attachment'] = array(
+							'url'    => $src[0],
+							'width'  => 256,
+							'height' => $src[2] * ( 256 / $src[1] ),
+							'title'  => get_the_title( $image['value'] ),
+						);
+
+						$data['experiment_images'][] = $image;
 					}//end foreach
 				}//end if
 			}
 
 			$data['test_images'] = $this->core->get_options( 'test_images' );
+
+			$data['alternate_image_select_title'] = esc_html__( 'Set Alternate Image', 'm-chart' );
+			$data['alternate_image_select_button'] = esc_html__( 'Set alternate image', 'm-chart' );
+			$data['title_remove_confirm'] = esc_html__( 'Are you sure you want to remove this title?', 'm-chart' );
+			$data['image_remove_confirm'] = esc_html__( 'Are you sure you want to remove this image?', 'm-chart' );
+			$data['image_already_used'] = esc_html__( 'That image was already used!', 'm-chart' );
+			$data['thumbnail_id'] = get_post_thumbnail_id( $post->ID );
 
 			if ( isset( $data ) ) {
 				wp_localize_script( 'headline-envy-admin', 'headline_envy_admin', $data );
@@ -234,14 +248,13 @@ class Headline_Envy_Admin {
 			return;
 		}// end if
 
-		if ( ! isset( $_POST['headline_envy_titles_loaded'] ) ) {
+		if ( ! isset( $_POST['headline_envy_loaded'] ) ) {
 			return;
 		}//end if
 
 		if ( ! empty( $_POST['he-winner'] ) ) {
 			remove_action( 'save_post', array( $this, 'save_post' ) );
 			$this->core->select_winner( $post->ID, 'title', absint( $_POST['he-winner'] ) );
-			return;
 		}//end if
 
 		$titles = array();
@@ -251,6 +264,23 @@ class Headline_Envy_Admin {
 		}//end if
 
 		$this->save_titles( $post->ID, $titles );
+
+		if ( ! $options['test_images'] ) {
+			return;
+		}//end if
+
+		if ( ! empty( $_POST['he-image-winner'] ) ) {
+			remove_action( 'save_post', array( $this, 'save_post' ) );
+			$this->core->select_winner( $post->ID, 'image', absint( $_POST['he-image-winner'] ) );
+		}//end if
+
+		$images = array();
+
+		if ( ! empty( $_POST['headline_envy_image'] ) ) {
+			$images = $_POST['headline_envy_image'];
+		}//end if
+
+		$this->save_images( $post->ID, $images );
 	}//end save_post
 
 	/**
@@ -285,23 +315,23 @@ class Headline_Envy_Admin {
 		$title_container_class = '';
 
 		if ( $title_experiment ) {
-			$container_class = 'has-title-experiment';
+			$title_container_class = ' has-title-experiment';
 		}//end if
 
 		$title_experiment_id = empty( $title_experiment['experiment_id'] ) ? 0 : $title_experiment['experiment_id'];
 
 		include_once __DIR__ . '/templates/title-ui.php';
-		
+
 		if ( ! $this->core->get_options( 'test_images' ) ) {
 			return;
 		}
-		
+
 		$image_experiment = $this->core->get_experiment( $post->ID, 'image' );
 
 		$image_container_class = '';
 
 		if ( $image_experiment ) {
-			$image_container_class = 'has-image-experiment';
+			$image_container_class = ' has-image-experiment';
 		}//end if
 
 		if ( has_post_thumbnail( $post->ID ) ) {
@@ -517,7 +547,7 @@ class Headline_Envy_Admin {
 
 		// if there are titles to delete, let's remove them from the experiment
 		if ( $titles_to_delete ) {
-			$experiment = $this->remove_titles_from_experiment( $experiment, $titles_to_delete );
+			$experiment = $this->remove_from_experiment( $experiment, $titles_to_delete, 'title' );
 		}//end if
 
 		// if there are titles to add, let's create the appropriate variations in Optimizely
@@ -552,8 +582,82 @@ class Headline_Envy_Admin {
 		}//end elseif
 		*/
 
-		update_post_meta( $post_id, 'headline-envy', $experiment );
+		// Get the existing meta
+		$meta = $this->core->get_post_meta( $post_id );
+
+		$meta['title'] = $experiment;
+
+		update_post_meta( $post_id, 'headline-envy', $meta );
 	}//end save_titles
+
+	/**
+	 * Saves images as variations on an experiment. If there isn't an experiment, one is created.
+	 *
+	 * @param $post_id int Post ID
+	 * @param $images array Collection of WP attachment ids
+	 */
+	public function save_images( $post_id, $images ) {
+		$experiment = $this->core->get_experiment( $post_id, 'image', FALSE );
+
+		if ( empty( $experiment['experiment_id'] ) ) {
+			// if there aren't any titles, bail.
+			if ( ! $images ) {
+				return;
+			}//end if
+
+			$experiment = $this->initialize_experiment( $post_id, 'image', $experiment );
+			$variations = $this->core->optimizely()->get_variations( $experiment['experiment_id'] );
+
+			$junk_variation = $variations[1]->id;
+		}//end if
+
+		if ( ! isset( $experiment['experiment_images'] ) ) {
+			$experiment['experiment_images'] = array();
+		}//end if
+
+		// sanitize titles
+		if ( $images ) {
+			foreach ( $images as &$image ) {
+				$image =  absint( $image );
+			}//end foreach
+		}//end if
+
+		$current_experiment_images = wp_list_pluck( $experiment['experiment_images'], 'value' );
+		$images_to_delete = array_diff( $current_experiment_images, $images );
+		$images_to_add = array_diff( $images, $current_experiment_images );
+
+		// if there aren't any titles to remove and there aren't any titles to add, let's bail
+		if ( ! $images_to_delete && ! $images_to_add ) {
+			return;
+		}//end if
+
+		// if there are titles to delete, let's remove them from the experiment
+		if ( $images_to_delete ) {
+			$experiment = $this->remove_from_experiment( $experiment, $images_to_delete, 'image' );
+		}//end if
+
+		// if there are titles to add, let's create the appropriate variations in Optimizely
+		if ( $images && $images_to_add ) {
+			$experiment = $this->add_images_to_experiment( $experiment, $images_to_add );
+		}//end if
+
+		// clear out the automagically added variant
+		if ( $junk_variation ) {
+			$res = $this->core->optimizely()->delete_variation( $junk_variation );
+		}//end if
+
+		// if titles were added or removed, we'll need to rebalance the weights on the variations
+		if ( $images_to_add || $images_to_delete || $junk_variation ) {
+			$this->balance_variation_weights( $experiment, $images );
+		}//end if
+
+		// Get the existing meta
+		$meta = $this->core->get_post_meta( $post_id );
+
+		$meta['image'] = $experiment;
+
+		update_post_meta( $post_id, 'headline-envy', $meta );
+	}
 
 	/**
 	 * Initializes an experiment for a post
@@ -630,10 +734,19 @@ class Headline_Envy_Admin {
 	public function add_titles_to_experiment( $experiment, $titles_to_add ) {
 		foreach ( $titles_to_add as $title ) {
 			$clean_title = json_encode( $title );
-			$variation = $this->core->optimizely()->create_variation( $experiment['experiment_id'], array(
-				'description' => $title,
+			$variation   = array(
+				'description'  => $title,
 				'js_component' =>  "$( 'headline-envy[data-experiment=\"{$experiment['experiment_id']}\"]' ).text( {$clean_title} );",
-			) );
+			);
+
+			// Sites that use titles in non-standard ways and may want override the default variation Javascript
+			$variation['js_component'] = apply_filters(
+				'headline_envy_title_variation_javascript',
+				$variation['js_component'],
+				$clean_title
+			);
+
+			$variation = $this->core->optimizely()->create_variation( $experiment['experiment_id'], $variation );
 
 			$experiment['experiment_titles'][] = array(
 				'variation' => $variation->id,
@@ -645,29 +758,82 @@ class Headline_Envy_Admin {
 	}//end add_titles_to_experiment
 
 	/**
-	 * Given a list of titles, thie method adds those titles to the given experiment
+	 * Given a list of images, thie method adds those images to the given experiment
 	 *
 	 * @param $experiment Array HeadlineEnvy experiment data
-	 * @param $titles_to_delete Array Collection of titles to remove from the experiment
+	 * @param $images_to_add Array Collection of images to add to the experiment
 	 */
-	public function remove_titles_from_experiment( $experiment, $titles_to_delete ) {
-		// let's delete the titles we need to delete from Optimizely
-		foreach ( $experiment['experiment_titles'] as $key => $title ) {
-			if ( ! in_array( $title['value'], $titles_to_delete ) ) {
+	public function add_images_to_experiment( $experiment, $images_to_add ) {
+		foreach ( $images_to_add as $image ) {
+			$image     = get_post( $image );
+			$variation = array(
+				'description'  => get_the_title( $image->ID ),
+				'js_component' =>  '',
+			);
+
+			$sizes = get_intermediate_image_sizes();
+
+			foreach ( $sizes as $size ) {
+				$variation_image = wp_get_attachment_image_src( $image->ID, $size );
+
+				$object_name   = '$headline_envy_image_' . sanitize_title( str_replace( '-', '_', $size ) );
+				$experiment_id = $experiment['experiment_id'];
+				$alt_text      = $image->post_title;
+				$src_url       = $variation_image[0];
+				$img_width     = $variation_image[1];
+				$img_height    = $variation_image[2];
+
+				ob_start();
+				require __DIR__ . '/templates/image_variation.php';
+				$variation['js_component'] .= trim( ob_get_clean() ) . "\n";
+			}
+
+			// Sites that use thumbnails in non-standard ways and may want override the default variation Javascript
+			$variation['js_component'] = apply_filters(
+				'headline_envy_image_variation_javascript',
+				trim( $variation['js_component'] ),
+				$image,
+				$experiment,
+				$sizes
+			);
+
+			$variation = $this->core->optimizely()->create_variation( $experiment['experiment_id'], $variation );
+
+			$experiment['experiment_images'][] = array(
+				'variation' => $variation->id,
+				'value'     => $image->ID,
+			);
+		}//end foreach
+
+		return $experiment;
+	}//end add_images_to_experiment
+
+	/**
+	 * Given a list of variations, this method removes them from the given experiment
+	 *
+	 * @param $experiment Array HeadlineEnvy experiment data
+	 * @param $to_delete Array Collection of variations to remove from the experiment
+	 * @param $type String Experiment type title/image
+	 */
+	public function remove_from_experiment( $experiment, $to_delete, $type = 'title' ) {
+		// let's delete the items we need to delete from Optimizely
+		foreach ( $experiment['experiment_' . $type . 's'] as $key => $variation ) {
+			if ( ! in_array( $variation['value'], $to_delete ) ) {
 				continue;
 			}//end if
 
 			// @TODO: if Optimizely fixes their weirdness around deleting, this should become unnecessary
-			$this->core->optimizely()->update_variation( $title['variation'], array(
+			$this->core->optimizely()->update_variation( $variation['variation'], array(
 				'weight' => 0,
 				'is_paused' => TRUE,
 			) );
-			$this->core->optimizely()->delete_variation( $title['variation'] );
-			unset( $experiment['experiment_titles'][ $key ] );
+			$this->core->optimizely()->delete_variation( $variation['variation'] );
+
+			unset( $experiment['experiment_' . $type . 's'][ $key ] );
 		}//end foreach
 
 		return $experiment;
-	}//end remove_titles_from_experiment
+	}//end remove_from_experiment
 
 	/**
 	 * Given a list of titles, this method rebalances the weights of variations within an experiment

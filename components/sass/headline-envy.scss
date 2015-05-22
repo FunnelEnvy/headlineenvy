@@ -1,3 +1,17 @@
+@mixin clearfix {
+	&:after {
+		content: "";
+		display: table;
+		clear: both;
+	}
+}
+
+@mixin select-box {
+	background: #fcfce8;
+	border: 1px solid #dbd800;
+	padding: 10px;
+}
+
 .he-container {
 	&#he-titles {
 		counter-reset: title-counter;
@@ -9,10 +23,7 @@
 		}
 
 		&.title-select {
-			background: #fcfce8;
-			border: 1px solid #dbd800;
-			border-radius: 4px;
-			padding: 1rem;
+			@include select-box;
 
 			.add-title,
 			.select-title {
@@ -34,7 +45,8 @@
 					display: none;
 				}
 
-				[name="he-winner"] {
+				[name="he-winner"],
+				[name="he-image-winner"] {
 					display: inline-block;
 				}
 			}
@@ -83,17 +95,9 @@
 		}
 	}
 
-	&.he-image-ui {
-		display: none;
-		padding: 0 12px 16px;
-		
-		&.active {
-			display: inline-block;
-		}
-	}
-
 	// don't show the "Pick Winner" button when creating a new post
-	.select-title {
+	.select-title,
+	.select-image {
 		display: none;
 
 		.post-new-php & {
@@ -105,9 +109,90 @@
 		display: inline-block;
 	}
 
+	.he-image + .he-image + button + .select-image {
+		display: block;
+		margin-top: 10px;
+	}
+
 	.cancel-select-title,
-	.he-title-original {
+	.cancel-select-image,
+	.he-title-original,
+	.he-image-original {
 		display: none;
+	}
+
+	&.he-image-ui {
+		display: none;
+		padding: 0 12px 16px;
+
+		&.active {
+			display: inline-block;
+		}
+
+		&.image-select {
+			@include select-box;
+
+			border-bottom: none;
+			border-left: none;
+			border-right: none;
+			box-sizing: border-box;
+			width: 100%;
+
+			label,
+			:hover & label {
+				padding: .6rem .5rem .2rem;
+			}
+
+			@media (max-width:782px) {
+				label,
+				:hover & label {
+					padding: .6rem 1rem .6rem .5rem;
+				}
+			}
+
+			label {
+				.num {
+					display: none;
+				}
+
+				[name="he-image-winner"] {
+					display: inline-block;
+					margin-left: 4px;
+				}
+			}
+
+			.he-image {
+				&:hover {
+					.dashicons-dismiss {
+						display: none;
+					}
+				}
+			}
+
+			.he-image-original {
+				display: block;
+				font-style: italic;
+
+				label {
+					margin-right: 1rem;
+					position: relative;
+					top: 0;
+				}
+			}
+
+			.add-image,
+			.select-image {
+				display: none;
+			}
+
+			.he-image + button + .select-image {
+				display: none;
+			}
+
+			.cancel-select-image {
+				display: inline-block;
+			}
+		}
 	}
 
 	.view-experiment {
@@ -127,10 +212,20 @@
 		.view-experiment {
 			display: inline-block;
 		}
+
+		&.he-image-ui {
+			.view-experiment {
+				display: block;
+				margin-left: 0;
+				margin-top: 10px;
+			}
+		}
 	}
 
-	.he-title {
+	.he-title,
+	.he-image {
 		margin-bottom: .5rem;
+		position: relative;
 
 		p {
 			margin-top: 0;
@@ -186,14 +281,37 @@
 				transition: all 0.25s ease;
 			}
 
-			[name="he-winner"] {
+			[name="he-winner"],
+			[name="he-image-winner"] {
 				display: none;
 			}
 		}
 
-		input {
+		input[type="text"] {
 			padding: .3215rem;
 			width: calc( 100% - 8.5rem );
+		}
+	}
+
+	.he-image {
+		&:hover {
+			label {
+				padding: .4rem .5rem;
+			}
+		}
+
+		.he-status {
+			bottom: 10px;
+			position: absolute;
+			left: 0;
+		}
+
+		label {
+			height: 18px;
+			left: 10px;
+			padding: .6rem .5rem .2rem;
+			position: absolute;
+			top: 10px;
 		}
 	}
 
@@ -222,6 +340,10 @@
 			-webkit-transition: all 0.25s ease;
 			transition: all 0.25s ease;
 			top: 4px;
+
+			@media (max-width:782px) {
+				top: 1px;
+			}
 		}
 
 		&:hover {
