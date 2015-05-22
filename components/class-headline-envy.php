@@ -260,7 +260,7 @@ class Headline_Envy {
 		
 		$additions = ' data-experiment="' . esc_attr( $experiment['experiment_id'] ) . '" data-size="' . esc_attr( $size ) . '"$0';
 		
-		return preg_replace( '#/?>$#', $additions, $html );
+		return '<headline-envy-image data-experiment="' . esc_attr( $experiment['experiment_id'] ) . '" data-size="' . esc_attr( $size ) . '">' . trim( $html ) . '</headline-envy-image>';
 	}//end the_title
 
 	/**
