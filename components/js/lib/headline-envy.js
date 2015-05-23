@@ -23,7 +23,7 @@ var headline_envy = headline_envy || {};
 	};
 
 	my.collect_experiments = function() {
-		$( 'headline-envy' ).each( function() {
+		$( 'headline-envy, headline-envy-image' ).each( function() {
 			var $el = $( this );
 			var experiment = $el.data( 'experiment' );
 

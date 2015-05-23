@@ -82,6 +82,12 @@
 						</td>
 					</tr>
 					<tr>
+						<th scope="row"><?php esc_html_e( 'Turn on featured image testing?', 'headline-envy' ); ?></th>
+						<td>
+							<?php $this->check_box( 'test_images' ); ?>
+						</td>
+					</tr>
+					<tr>
 						<th scope="row"><?php esc_html_e( 'Auto-select winning headlines?', 'headline-envy' ); ?></th>
 						<td>
 							<?php $this->check_box( 'auto_select_winner' ); ?>

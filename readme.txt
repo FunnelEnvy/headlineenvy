@@ -3,7 +3,7 @@ Contributors: borkweb, zbtirrell, methnen
 Tags: a/b testing, headline, optimization, optimizely, post, page, testing, title
 Requires at least: 3.9
 Tested up to: 4.2
-Stable tag: 1.0.1
+Stable tag: 1.1
 License: MIT
 License URI: http://opensource.org/licenses/MIT
 
@@ -45,6 +45,11 @@ HeadlineEnvy works by attaching to the [the_title](https://codex.wordpress.org/P
 3. Winning headline!
 
 == Changelog ==
+
+= 1.1 =
+
+* Added the ability to run tests on Featuerd Images
+* Added `headline_envy_title_variation_javascript` and `headline_envy_image_variation_javascript` filter hooks
 
 = 1.0.1 =
 
