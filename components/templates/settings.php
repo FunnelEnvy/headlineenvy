@@ -13,13 +13,14 @@
 						if ( $invalid_optimizely_api_key ) {
 							?>
 							<div class="invalid-key">
-								<?php _e( 'The Optimizely API key that was entered is invalid. Please <a href="https://www.optimizely.com/tokens" target="_blank">verify the API key</a> and try again.', 'headline-envy' ); ?>
+								<?php
+								esc_html_e( 'The Optimizely API key that was entered is invalid.', 'headline-envy' ); ?> <a href="https://www.optimizely.com/tokens" target="_blank"><?php esc_html_e( 'Please verify the API key and try again.', 'headline-envy' ); ?></a>
 							</div>
 							<?php
 						} else {
 							?>
 							<p>
-								<em><?php _e( 'Get <a href="https://www.optimizely.com/tokens">your API key</a>', 'headline-envy' ); ?></em>.
+								<em><a href="https://www.optimizely.com/tokens"><?php esc_html_e( 'Get your API key', 'headline-envy' ); ?></a></em>.
 							</p>
 							<?php
 						}//end else
@@ -91,10 +92,12 @@
 				}//end if
 
 				if ( ! empty( $options['optimizely_shell_experiment_id'] ) ) {
+					// generate the full URL for better escaping
+					$experiment_url = add_query_arg( 'experiment_id', absint( $options['optimizely_shell_experiment_id'] ), 'https://www.optimizely.com/edit' );
 					?>
 					<tr>
 						<td colspan="2">
-							<a href="https://www.optimizely.com/edit?experiment_id=<?php echo absint( $options['optimizely_shell_experiment_id'] ); ?>"><?php esc_html_e( 'Experiment template', 'headline-envy' ); ?></a>
+							<a href="<?php echo esc_url( $experiment_url ) ?>"><?php esc_html_e( 'Experiment template', 'headline-envy' ); ?></a>
 						</td>
 					</tr>
 					<?php

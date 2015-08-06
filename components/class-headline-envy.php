@@ -235,6 +235,9 @@ class Headline_Envy {
 	 * Select winner
 	 */
 	public function select_winner( $post_id, $variation_id ) {
+		// Sanitize our $post_id early
+		$post_id = absint( $post_id );
+
 		// get title for the variant
 		$experiment = $this->get_experiment( $post_id, FALSE );
 
@@ -242,7 +245,7 @@ class Headline_Envy {
 			$new_title = FALSE;
 			foreach ( $experiment['experiment_titles'] as $title ) {
 				if ( $variation_id == $title['variation'] ) {
-					$new_title = $title['value'];
+					$new_title = sanitize_text_field( $title['value'] );
 				}//end if
 			}// end foreach
 
@@ -252,7 +255,7 @@ class Headline_Envy {
 
 			// update post title
 			wp_update_post( array(
-				'ID' => absint( $post_id ),
+				'ID' => $post_id,
 				'post_title' => $new_title,
 			) );
 		}//end if
