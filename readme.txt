@@ -3,7 +3,7 @@ Contributors: borkweb, zbtirrell, methnen
 Tags: a/b testing, headline, optimization, optimizely, post, page, testing, title
 Requires at least: 3.9
 Tested up to: 4.2
-Stable tag: 1.0.1
+Stable tag: 1.0.2
 License: MIT
 License URI: http://opensource.org/licenses/MIT
 
@@ -11,8 +11,7 @@ WordPress headline testing with Optimizely
 
 == Description ==
 
-HeadlineEnvy adds the ability to A/B test the titles of your content
-through integration with Optimizely.
+HeadlineEnvy adds the ability to A/B test the titles of your content through integration with Optimizely.
 
 __Features include:__
 
@@ -45,6 +44,17 @@ HeadlineEnvy works by attaching to the [the_title](https://codex.wordpress.org/P
 3. Winning headline!
 
 == Changelog ==
+
+= 1.0.2 =
+
+* Lots of improvements and code tweaks thanks to [@colegeissinger](https://github.com/colegeissinger):
+	* Any translated strings should be escaped with esc_html__() or esc_html_e()
+	* Checking user has right privileges
+	* Cleaning up of redundant sanitization functionality into a central method
+	* Added a "Deep Sanitize" method to ensure no matter the type of data, everything is cleaned up
+	* Updates to some JS to avoid XSS instances through DOM manipulation
+	* Caching jQuery selectors like $( document )
+	* Sanitizing late, escaping early
 
 = 1.0.1 =
 
