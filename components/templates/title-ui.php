@@ -16,7 +16,8 @@
 	<button class="button add-title" type="button"><span class="dashicons dashicons-plus"></span> <?php esc_html_e( 'Add alternate title', 'headline-envy' ); ?></button>
 	<button class="button select-title" type="button"><span class="dashicons dashicons-awards"></span> <?php esc_html_e( 'Pick winner', 'headline-envy' ); ?></button>
 	<button class="button cancel-select-title" type="button">Cancel</button>
-	<a href="https://www.optimizely.com/results?experiment_id=<?php echo absint( $experiment_id ); ?>" class="view-experiment" target="_blank"><?php esc_html_e( 'View experiment details', 'headline-envy' ); ?></a>
+	<?php $experiment_details = add_query_arg( 'experiment_id', absint( $experiment_id ), 'https://www.optimizely.com/results' ); ?>
+	<a href="<?php echo esc_url( $experiment_details ); ?>" class="view-experiment" target="_blank"><?php esc_html_e( 'View experiment details', 'headline-envy' ); ?></a>
 </div>
 <script id="he-title-template" type="text/he-template">
 	<div class="he-title">

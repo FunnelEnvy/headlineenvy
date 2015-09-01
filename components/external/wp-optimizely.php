@@ -28,19 +28,21 @@ class WP_Optimizely extends Optimizely {
 			$args['body'] = json_encode( $options['data'] );
 		}//end if
 
-		$res = wp_remote_request( $url, $args );
+		$res = wp_remote_request( esc_url_raw( $url ), $args );
 
 		if ( is_wp_error( $res ) ) {
 			return FALSE;
 		}//end if
 
 		// the following variables are primarily for debugging purposes
-		$this->request_http_code = $res['response']['code'];
+		// Let's utilise the WP Remote functions to retrieve metadata
+		$this->request_http_code = wp_remote_retrieve_response_code( $res );
 		$this->request_info = $res;
 		$this->request_url = $url;
-		$this->request_response = $res['body'];
+		$this->request_response = wp_remote_retrieve_body( $res );
 
-		$return = json_decode( $res['body'] );
-		return $return ?: $res['body'];
+		$return = json_decode( $this->request_response );
+		
+		return $return ?: $this->request_response;
 	}//end request
 }// end WP_Optimizely

@@ -82,17 +82,22 @@ class Headline_Envy_Admin {
 			add_action( 'admin_notices', array( $this, 'admin_notices_optimizely' ) );
 		}//end elseif
 
-		add_menu_page( __( 'HeadlineEnvy', 'headline-envy' ), __( 'HeadlineEnvy', 'headline-envy' ), 'manage_options', 'headline-envy-settings', array( $this, 'settings' ) );
-		add_submenu_page( 'headline-envy-settings', __( 'Results', 'headline-envy' ), __( 'Results', 'headline-envy' ), 'edit_posts', 'headline-envy-results', array( $this, 'results' ) );
+		add_menu_page( esc_html__( 'HeadlineEnvy', 'headline-envy' ), esc_html__( 'HeadlineEnvy', 'headline-envy' ), 'manage_options', 'headline-envy-settings', array( $this, 'settings' ) );
+		add_submenu_page( 'headline-envy-settings', esc_html__( 'Results', 'headline-envy' ), esc_html__( 'Results', 'headline-envy' ), 'edit_posts', 'headline-envy-results', array( $this, 'results' ) );
 
 		// if the settings page was submitted, let's save the data and redirect to the settings page again
-		// to avoid the silly reload POST behavior
+		// to avoid the silly reload POST behavior. But first, for security reasons, we'll want to whitelist
+		// POST data for use and ensure the current user has the right privileges.
+		$post_data = array_intersect_key( $_POST, [ $this->core->option_key => [ ] ] );
 		if (
 			'POST' == $_SERVER['REQUEST_METHOD']
-			&& isset( $_POST[ $this->core->option_key ] )
+			&& isset( $post_data[ $this->core->option_key ] )
+			&& current_user_can( 'manage_options' )
 			&& $this->verify_nonce( "{$this->core->slug}-save-settings" )
 		) {
-			$this->update_settings( $_POST );
+			// We'll want to sanitize variables early
+			$post_data[ $this->core->option_key ] = $this->sanitize_settings( $post_data[ $this->core->option_key ] );
+			$this->update_settings( $post_data );
 
 			// we need to do a JS redirect here because the page has already begun to render
 			wp_redirect( admin_url( 'admin.php?page=headline-envy-settings' ) );
@@ -150,11 +155,13 @@ class Headline_Envy_Admin {
 			$experiment_name = 'HeadlineEnvy experiment template for ' . home_url();
 			$experiment_id = FALSE;
 
-			foreach ( $experiments as $experiment ) {
-				if ( $experiment_name === $experiment->description ) {
-					$experiment_id = $experiment->id;
-				}//end if
-			}//end foreach
+			if ( is_array( $experiments ) ) {
+				foreach ( $experiments as $experiment ) {
+					if ( $experiment_name === $experiment->description ) {
+						$experiment_id = $experiment->id;
+					}//end if
+				}//end foreach
+			}//end if
 
 			if ( ! $experiment_id ) {
 				$experiment = $this->core->optimizely()->create_experiment( $options['optimizely_project_id'], array(
@@ -229,7 +236,7 @@ class Headline_Envy_Admin {
 		$titles = array();
 
 		if ( ! empty( $_POST['headline_envy_title'] ) ) {
-			$titles = $_POST['headline_envy_title'];
+			$titles = array_map( 'sanitize_text_field', (array) $_POST['headline_envy_title'] );
 		}//end if
 
 		$this->save_titles( $post->ID, $titles );
@@ -306,24 +313,82 @@ class Headline_Envy_Admin {
 				continue;
 			}//end if
 
-			// if the item isn't an array, clean the value and continue
-			if ( ! is_array( $data[ $field ] ) ) {
-				$sanitized[ $field ] = $sanitization( trim( $data[ $field ] ) );
-				continue;
-			}//end if
-
-			if ( ! isset( $sanitized[ $field ] ) ) {
-				$sanitized[ $field ] = array();
-			}//end if
-
-			// sanitize each value in the array
-			foreach ( $data[ $field ] as $key => $value ) {
-				$sanitized[ $field ][ $key ] = $sanitization( trim( $value ) );
-			}//end foreach
+			// Sanitize all the data
+			$sanitized[ $field ] = $this->sanitize_field( $data[ $field ], $sanitization );
 		}//end foreach
 
 		return $sanitized;
 	}//end sanitize_settings
+
+	/**
+	 * Recursively sanitize data according to a method
+	 *
+	 * Currently, there are only two possible sanitization methods: absint() and sanitize_text_field() (defaulting to
+	 * the latter). Objects and arrays will be recursively sanitized. Other non-scalar values will be replaced with an
+	 * empty string sanitized with the specified method. All scalar values will be sanitized with the specified method.
+	 *
+	 * @param mixed  $data
+	 * @param string $method
+	 *
+	 * @return mixed
+	 */
+	protected function sanitize_field( $data, $method ) {
+		if ( ! is_scalar( $data ) ) {
+			if ( is_object( $data ) ) {
+				$data = get_object_vars( $data ) ? get_object_vars( $data ) : $data;
+			}//end if
+			if ( is_array( $data ) ) {
+				foreach ( $data as $k => $datum ) {
+					$data[ $k ] = $this->sanitize_field( $datum, $method );
+				}
+
+				return $data;
+			}//end if
+
+			return $this->sanitize_field( '', $method );
+		}// end if
+		switch ( $method ) {
+			case 'absint':
+				return absint( $data );
+			default:
+				return sanitize_text_field( $data );
+		}//end switch
+	}//end sanitize_field
+
+	/**
+	 * Recursively sanitize a value
+	 *
+	 * @param mixed $value
+	 *
+	 * @return mixed
+	 */
+	public function sanitize_deep( $value ) {
+		if ( is_scalar( $value ) ) {
+			// Strings are the only values we need to worry about if we already know it's scalar
+			if ( is_string( $value ) ) {
+				$value = sanitize_text_field( $value );
+			}
+
+			return $value;
+		}
+		if ( is_array( $value ) || $value instanceof \Iterator ) {
+			$sanitized = [ ];
+			foreach ( $value as $k => $v ) {
+				$sanitized[ $this->sanitize_deep( $k ) ] = $this->sanitize_deep( $v );
+			}
+
+			return $sanitized;
+		}
+		if ( $value instanceof \stdClass ) {
+			return (object) $this->sanitize_deep( (array) $value );
+		}
+		if ( is_object( $value ) && $values = get_object_vars( $value ) ) {
+			return $this->sanitize_deep( $values );
+		}
+		// If we've gotten to this point, this is either a resource or an object with no public properties.
+		// Either way, we can't deeply sanitize it, so return null.
+		return null;
+	}
 
 	/**
 	 * Output the settings page
@@ -493,24 +558,7 @@ class Headline_Envy_Admin {
 			$this->balance_variation_weights( $experiment, $titles );
 		}//end if
 
-		/**
-		 * SHOULD WE DO THIS?  It pauses fine, but when you switch an experiment back to running, it looks like it is creating a new project
-		// if there aren't any titles, let's pause the experiment
-		if ( $current_experiment_titles && ! $titles ) {
-			// if we're removing all titles, let's pause the experiment
-			$this->core->optimizely()->update_experiment( $experiment['experiment_id'], array(
-				'status' => 'Paused',
-			) );
-		} elseif ( $titles && ! $current_experiment_titles && ! $junk_variation ) {
-			// if we are adding titles and there weren't any stored in meta (and this isn't the first
-			// time creation of the experiment), let's unpause the experiment
-			$this->core->optimizely()->update_experiment( $experiment['experiment_id'], array(
-				'status' => 'Running',
-			) );
-		}//end elseif
-		*/
-
-		update_post_meta( $post_id, 'headline-envy', $experiment );
+		update_post_meta( $post_id, 'headline-envy', $this->sanitize_deep( $experiment ) );
 	}//end save_titles
 
 	/**
@@ -587,10 +635,9 @@ class Headline_Envy_Admin {
 	 */
 	public function add_titles_to_experiment( $experiment, $titles_to_add ) {
 		foreach ( $titles_to_add as $title ) {
-			$clean_title = json_encode( $title );
 			$variation = $this->core->optimizely()->create_variation( $experiment['experiment_id'], array(
 				'description' => $title,
-				'js_component' =>  "$( 'headline-envy[data-experiment=\"{$experiment['experiment_id']}\"]' ).text( {$clean_title} );",
+				'js_component' =>  '$( \'headline-envy[data-experiment="' . esc_attr( $experiment['experiment_id'] ) . '"]\' ).text( ' . json_encode( $title ) . ' );', // Run sanitization as late as possible
 			) );
 
 			$experiment['experiment_titles'][] = array(

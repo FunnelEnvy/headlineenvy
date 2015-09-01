@@ -1,1 +1,1 @@
-var HeadlineEnvy=document.registerElement("headline-envy");
+var HeadlineEnvy=document.registerElement?document.registerElement( 'headline-envy' ):undefined;

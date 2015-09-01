@@ -8,8 +8,13 @@
 			<?php
 		} else {
 			foreach ( $experiments as $data ) {
-				$title = esc_html( $data['experiment']->description );
-				$title = preg_replace( '/HeadlineEnvy \[([0-9]+)\]: (.*)/', '<a href="' . admin_url( 'post.php?post=' ) . '$1&action=edit">$2</a>', $title );
+				$title = $data['experiment']->description;
+				if ( ! preg_match( '/HeadlineEnvy \[(\d+)\]: (.*)/', $title, $matches ) ) {
+					continue;
+				}
+				$post_id        = (int) $matches[1];
+				$title          = sanitize_text_field( $matches[2] );
+				$post_edit_link = get_edit_post_link( $post_id, 'raw' );
 				?>
 					<div id="experiment-<?php echo esc_attr( $data['experiment']->id ); ?>" data-exp-id="<?php echo esc_attr( $data['experiment']->id ); ?>" class="headline-results" data-exp-title="<?php echo esc_attr( $data['experiment']->description ); ?>">
 						<header>
@@ -25,18 +30,20 @@
 									}//end foreach
 									?>
 								</select>
-								<a class="button" href="https://www.optimizely.com/results?experiment_id=<?php echo absint( $data['experiment']->id ); ?>" target="_blank" title="<?php esc_html_e( 'View full results', 'headline-envy' ); ?>"><span class="dashicons dashicons-chart-bar"></span></a>
+								<a class="button" href="<?php echo esc_url( 'https://www.optimizely.com/results?experiment_id=' . absint( $data['experiment']->id ) ); ?>" target="_blank" title="<?php esc_attr_e( 'View full results', 'headline-envy' ); ?>"><span class="dashicons dashicons-chart-bar"></span></a>
 								<?php
-								$edit_button = preg_replace( '!(<a[^>]+)>([^<]+)</a>!', '$1 class="button" title="' . __( 'Edit', 'headline-envy' ) . '"><span class="dashicons dashicons-edit"></span></a>', $title );
-								echo $edit_button;
-								?>
+								if ( $post_edit_link ) {
+									?>
+									<a href="<?php echo esc_url( $post_edit_link ); ?>" class="button" title="<?php esc_html_e( 'Edit', 'headline-envy' ); ?>">
+										<span class="dashicons dashicons-edit"></span>
+									</a>
+								<?php } ?>
 							</span>
-							<span class="experiment-title">
-								<?php
-								// escaped up above - will contain HTML
-								echo $title;
-								?>
-							</span>
+							<?php if ( $post_edit_link ) { ?>
+								<span class="experiment-title">
+									<a href="<?php echo esc_url( $post_edit_link ); ?>"><?php echo esc_html( $title ); ?></a>
+								</span>
+							<?php } ?>
 						</header>
 						<div class="experiment-results">
 							<?php
@@ -72,20 +79,20 @@
 													switch ( $variation->status ) {
 														case 'winner':
 															$icon = 'awards';
-															$icon_info = __( 'Winning title', 'headline-envy' );
+															$icon_info = esc_html__( 'Winning title', 'headline-envy' );
 															break;
 														case 'loser':
 															$icon = 'no';
-															$icon_info = __( 'Losing title', 'headline-envy' );
+															$icon_info = esc_html__( 'Losing title', 'headline-envy' );
 															break;
 														case 'baseline':
 															$icon = 'minus';
-															$icon_info = __( 'Baseline', 'headline-envy' );
+															$icon_info = esc_html__( 'Baseline', 'headline-envy' );
 															break;
 														case 'inconclusive':
 														default:
 															$icon = 'clock';
-															$icon_info = __( 'Inconclusive results. More time is needed.', 'headline-envy' );
+															$icon_info = esc_html__( 'Inconclusive results. More time is needed.', 'headline-envy' );
 															break;
 													}//end switch
 													?>

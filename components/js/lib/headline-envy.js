@@ -15,10 +15,12 @@ var headline_envy = headline_envy || {};
 		}//end if
 
 		for ( var i in my.experiments ) {
-			window.optimizely.push( [
-				'activate',
-				my.experiments[ i ].experiment
-			] );
+			if (my.experiments.hasOwnProperty(i)) {
+				window.optimizely.push([
+					'activate',
+					my.experiments[i].experiment
+				]);
+			}
 		}//end for
 	};
 
