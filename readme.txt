@@ -11,6 +11,8 @@ WordPress headline testing with Optimizely
 
 == Description ==
 
+Requires: PHP 5.4+
+
 HeadlineEnvy adds the ability to A/B test the titles of your content through integration with Optimizely.
 
 __Features include:__
